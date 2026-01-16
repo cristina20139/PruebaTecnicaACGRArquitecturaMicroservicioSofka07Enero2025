@@ -1,0 +1,693 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Implementacion Propuesta - Senior</title>
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --accent:#0f766e; --bg:#f8fafc; --card:#ffffff; --border:#e5e7eb; }
+    body { margin:0; font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); background: var(--bg); }
+    .container { max-width: 980px; margin: 36px auto; background: var(--card); padding: 28px 36px; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 24px rgba(15,23,42,0.08); }
+    h1 { margin: 0 0 6px; color: var(--accent); }
+    h2 { margin-top: 28px; color: #0f172a; }
+    h3 { margin-top: 20px; color: #1f2937; }
+    p { line-height: 1.55; }
+    .tag { display:inline-block; padding: 2px 8px; border-radius: 999px; background:#e6fffb; color:#115e59; font-size: 0.85rem; margin-left: 6px; }
+    .note { background:#f0fdfa; border-left: 4px solid #14b8a6; padding: 12px 16px; border-radius: 8px; }
+    .warn { background:#fff7ed; border-left: 4px solid #fb923c; padding: 12px 16px; border-radius: 8px; }
+    code, pre { font-family: Consolas, "Courier New", monospace; }
+    pre { background:#f8fafc; border:1px solid var(--border); border-radius: 8px; padding: 12px; overflow:auto; }
+    ul { padding-left: 18px; }
+    li { margin: 6px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+    thead th { background: #f1f5f9; }
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .card { border:1px solid var(--border); border-radius: 10px; padding: 12px 14px; background:#ffffff; }
+    .justif { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: #fcfcff; margin: 12px 0; }
+
+    .requisitos-list { counter-reset: item; }
+    .requisitos-list .justif { position: relative; padding-left: 52px; }
+    
+    .level-1 { border-left: 6px solid #2563eb; background: #f8fbff; }
+    .level-2 { border-left: 6px solid #16a34a; background: #f7fcf7; }
+    .level-3 { border-left: 6px solid #f97316; background: #fffaf5; }
+    .level-4 { border-left: 6px solid #9333ea; background: #fbf7ff; }
+
+    .justif h3 { margin: 0 0 8px; font-size: 1.02rem; color: #0f172a; }
+    .quote { background:#f1f5f9; border-left: 4px solid #64748b; padding: 8px 10px; border-radius: 6px; color:#1f2937; }
+    .muted { color: var(--muted); }
+
+    main { counter-reset: h2; }
+    section { counter-reset: h3; }
+    section > h2::before {
+      counter-increment: h2;
+      content: counter(h2) ". ";
+      color: #0f172a;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    section h3::before {
+      counter-increment: h3;
+      content: counter(h2) "." counter(h3) " ";
+      color: #334155;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    section ul { list-style: none; padding-left: 0; counter-reset: li; }
+    section ul > li { position: relative; padding-left: 42px; }
+    section ul > li::before {
+      counter-increment: li;
+      content: counter(h2) "." counter(li) " ";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #64748b;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .h2-title { font-size: 1.6rem; letter-spacing: 0.01em; color: #0b4b44; border-bottom: 2px solid #0f766e; padding-bottom: 6px; }
+    .requisitos-list .justif::before { content: counter(h2) "." counter(req) " "; background: #e2e8f0; color: #0f172a; }
+    .requisitos-list { counter-reset: req; }
+    .requisitos-list .justif { counter-increment: req; }
+    .modal-trigger { border: none; background: #e2e8f0; color: #0f172a; border-radius: 6px; padding: 2px 6px; margin-right: 6px; cursor: pointer; font-weight: 700; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #ffffff; border-radius: 12px; padding: 20px 24px; max-width: 680px; width: calc(100% - 48px); box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+    .modal h4 { margin: 0 0 8px; color: #0f172a; }
+    .modal p { margin: 0 0 14px; color: #1f2937; }
+    .modal-actions { text-align: right; }
+    .modal-close { background: #0f766e; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Implementacion propuesta (Senior)</h1>
+      <p>Documento de referencia para cumplir el reto al 100% con foco en requisitos mandatorios y evaluacion tecnica.</p>
+    </header>
+
+    <section>
+      <h2 class="h2-title major-title">Objetivo</h2>
+      <p>Entregar una solucion <strong>distribuida en 2 microservicios reales</strong>, con comunicacion asincrona, Docker y pruebas minimas requeridas, evitando sobre-ingenieria y cumpliendo las reglas de negocio y endpoints exigidos.</p>
+      <div class="note">
+        <strong>Principio rector:</strong> cumplir el enunciado exacto antes de agregar complejidad. La evidencia de requisitos mandatorios pesa mas que optimizaciones extra.
+      </div>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Arquitectura propuesta</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Microservicio 1</h3>
+          <p><strong>Nombre:</strong> <code>ms-clientes-personas</code></p>
+          <ul>
+            <li>Contexto: identidad del cliente.</li>
+            <li>Entidades: <code>Persona</code>, <code>Cliente</code>.</li>
+            <li>Endpoints: <code>/clientes</code>.</li>
+            <li>Publica eventos asincronos: <code>ClienteCreado</code>, <code>ClienteActualizado</code>.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Microservicio 2</h3>
+          <p><strong>Nombre:</strong> <code>ms-cuentas-movimientos</code></p>
+          <ul>
+            <li>Contexto: operaciones financieras.</li>
+            <li>Entidades: <code>Cuenta</code>, <code>Movimiento</code>.</li>
+            <li>Endpoints: <code>/cuentas</code>, <code>/movimientos</code>, <code>/reportes</code>.</li>
+            <li>Consume eventos para validar estado del cliente.</li>
+          </ul>
+        </div>
+      </div>
+      <p><strong>Comunicacion:</strong> asincrona real via broker (RabbitMQ o Kafka). No usar eventos internos del framework como reemplazo.</p>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Arquitectura sugerida</h2>
+      <p>Descripcion breve de la arquitectura sugerida para el contexto Senior (dos microservicios, mensajeria asincrona y despliegue en contenedores).</p>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Modelo de dominio</h2>
+      <h3>Herencia obligatoria</h3>
+      <p>Implementar herencia JPA con <code>Cliente extends Persona</code>.</p>
+      <pre><code>@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+class Persona { ... }
+
+@Entity
+class Cliente extends Persona { ... }</code></pre>
+
+      <h3>Entidades y claves</h3>
+      <ul>
+        <li><strong>Persona</strong>: nombre, genero, edad, identificacion, direccion, telefono.</li>
+        <li><strong>Cliente</strong>: clienteId, contrasena, estado.</li>
+        <li><strong>Cuenta</strong>: numeroCuenta, tipoCuenta, saldoInicial, estado.</li>
+        <li><strong>Movimiento</strong>: fecha, tipoMovimiento, valor, saldo.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Endpoints (CRUD y reportes)</h2>
+      <table>
+        <thead>
+          <tr><th>Recurso</th><th>Verbos</th><th>Descripcion</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>/clientes</td><td>GET, POST, PUT, DELETE</td><td>CRUD de clientes</td></tr>
+          <tr><td>/cuentas</td><td>GET, POST, PUT, DELETE</td><td>CRUD de cuentas</td></tr>
+          <tr><td>/movimientos</td><td>GET, POST, PUT, DELETE</td><td>CRUD de movimientos</td></tr>
+          <tr><td>/reportes</td><td>GET</td><td>Estado de cuenta por cliente y rango de fechas</td></tr>
+        </tbody>
+      </table>
+      <p>Para reportes: <code>/reportes?clienteId=...&amp;fecha=YYYY-MM-DD,YYYY-MM-DD</code> (ajustar formato si se define otro en la API).</p>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Reglas de negocio clave</h2>
+      <ul>
+        <li>Un movimiento puede ser positivo o negativo.</li>
+        <li>El movimiento actualiza el saldo disponible.</li>
+        <li>Se registra toda transaccion.</li>
+        <li>Si no hay saldo, responder con <strong>"Saldo no disponible"</strong>.</li>
+      </ul>
+      <div class="warn">
+        <strong>Excepcion de dominio:</strong> usar una excepcion especifica (ej. <code>SaldoNoDisponibleException</code>) y mapearla a un error HTTP claro (ej. 400 o 409) con el mensaje exacto.
+      </div>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Comunicacion asincrona</h2>
+      <h3>Eventos sugeridos</h3>
+      <ul>
+        <li><code>ClienteCreadoEvent</code> con <code>clienteId</code> y <code>estado</code>.</li>
+        <li><code>ClienteActualizadoEvent</code> cuando cambia estado o datos relevantes.</li>
+      </ul>
+      <h3>Flujo minimo</h3>
+      <ol>
+        <li>ms-clientes-personas publica evento al crear/actualizar cliente.</li>
+        <li>ms-cuentas-movimientos consume y actualiza un registro local de clientes habilitados.</li>
+        <li>Al crear cuenta o movimiento, se valida que el cliente este activo.</li>
+      </ol>
+      <p>Esto demuestra independencia entre servicios y evita acoplarlos via llamadas sincronicas permanentes.</p>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Docker y despliegue</h2>
+      <ul>
+        <li>Un <code>Dockerfile</code> por microservicio.</li>
+        <li><code>docker-compose.yml</code> con ambos servicios, base de datos y broker.</li>
+        <li>Variables por servicio: puerto, DB, broker, credenciales.</li>
+      </ul>
+      <pre><code>services:
+  ms-clientes:
+  ms-cuentas:
+  db:
+  broker:</code></pre>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Pruebas requeridas</h2>
+      <ul>
+        <li><strong>1 prueba unitaria</strong> de dominio Cliente (reglas basicas).</li>
+        <li><strong>1 prueba de integracion</strong> (ej. endpoint de movimientos con actualizacion de saldo).</li>
+      </ul>
+      <p>Las pruebas deben ser ejecutables en CI local (maven/gradle) y documentadas en README.</p>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Entregables</h2>
+      <ul>
+        <li><strong>BaseDatos.sql</strong> con esquema y datos base.</li>
+        <li>Coleccion Postman exportada.</li>
+        <li>Repositorio Git publico con instrucciones claras.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="h2-title major-title">Checklist final (antes de entregar)</h2>
+      <ul>
+        <li>Dos procesos independientes corriendo localmente.</li>
+        <li>Broker en funcionamiento y eventos visibles en logs.</li>
+        <li>Docker build y compose funcionan sin ajustes manuales.</li>
+        <li>Herencia <code>Cliente extends Persona</code> en JPA.</li>
+        <li>Mensaje exacto: "Saldo no disponible".</li>
+        <li>Endpoints probados con Postman y coleccion incluida.</li>
+      </ul>
+    </section>
+    <section class="requisitos-list">
+      <h2 class="h2-title major-title">Requisitos citados y justificacion por item</h2>
+      <p class="muted">Cada recuadro cita el item original, incluye su identificador y explica la decision de implementacion.</p>
+
+      <div class="justif level-1">
+        <h3>Buenas practicas y patrones</h3>
+        <p class="muted">ID: L004</p>
+        <div class="quote">"Aplique todas las buenas practicas, patrones Repository, etc que considere necesario"</div>
+        <p>Se aplica Repository en cada microservicio para desacoplar persistencia de dominio y facilitar pruebas, sin capas extra que no aporten valor.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>JPA / Entity Framework Core</h3>
+        <p class="muted">ID: L005</p>
+        <div class="quote">"El manejo de entidades se debe manejar JPA / Entity Framework Core"</div>
+        <p>Se usa JPA en Java Spring Boot para mapear entidades y asegurar el cumplimiento del requerimiento tecnico.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Mensajes de excepciones</h3>
+        <p class="muted">ID: L006</p>
+        <div class="quote">"Se debe manejar mensajes de excepciones."</div>
+        <p>Se definen excepciones de dominio y un handler global para devolver mensajes claros y el texto exacto solicitado.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Pruebas unitarias minimas de endpoints</h3>
+        <p class="muted">ID: L007</p>
+        <div class="quote">"Se debe realizar como minimo dos pruebas unitarias de los endpoints."</div>
+        <p>Se agrega al menos una prueba unitaria de cliente y otra de un endpoint clave para cubrir el requisito minimo.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Docker obligatorio</h3>
+        <p class="muted">ID: L008</p>
+        <div class="quote">"La solucion se debe desplegar en Docker."</div>
+        <p>Se incluyen Dockerfiles por microservicio y docker-compose con base de datos y broker.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Defensa tecnica posterior</h3>
+        <p class="muted">ID: L009</p>
+        <div class="quote">"Posterior a la entrega de este ejercicio, se estara agendando una entrevista tecnica donde el candidato debera defender la solucion planteada."</div>
+        <p>Se documenta arquitectura, flujos y decisiones para facilitar defensa tecnica en entrevista.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Stack permitido</h3>
+        <p class="muted">ID: L011</p>
+        <div class="quote">"Java spring boot / NetCore 5 o superior / Asp 4.8 o inferior"</div>
+        <p>Se elige Java Spring Boot por compatibilidad directa con JPA y ecosistema de mensajeria.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>IDE de preferencia</h3>
+        <p class="muted">ID: L012</p>
+        <div class="quote">"IDE de su preferencia"</div>
+        <p>Se usa un IDE comun (por ejemplo IntelliJ o VS Code) sin dependencia de tooling propietario.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Base de datos relacional</h3>
+        <p class="muted">ID: L013</p>
+        <div class="quote">"Base de Datos Relacional"</div>
+        <p>Se propone PostgreSQL o MySQL en contenedor para cumplir con el modelo relacional.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Validacion de API</h3>
+        <p class="muted">ID: L014</p>
+        <div class="quote">"Postman v9.13.2 (validador de API) / Karate DSL"</div>
+        <p>Se entrega coleccion Postman exportada para validar endpoints y flujos.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Nota de seniority</h3>
+        <p class="muted">ID: L016</p>
+        <div class="quote">"Nota: Considerar las siguientes indicaciones en base al perfil al que esta aplicando"</div>
+        <p>Se ajusta el alcance a Senior para cumplir todos los requerimientos F1 a F7.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Junior (alcance minimo)</h3>
+        <p class="muted">ID: L017</p>
+        <div class="quote">"Junior: Implementar los diferentes endpoints para cumplir las funcionalidades: F1, F2, F3"</div>
+        <p>Se menciona como referencia; el proyecto se ejecuta con alcance Senior.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>SemiSenior (2 microservicios + asincronia)</h3>
+        <p class="muted">ID: L018</p>
+        <div class="quote">"SemiSenior: Separar en 2 microservicios... comunicacion asincrona... F1, F2, F3, F4, F5"</div>
+        <p>Se cumple y se extiende a Senior, manteniendo dos procesos y eventos reales.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Senior (2 microservicios + F1-F7)</h3>
+        <p class="muted">ID: L019</p>
+        <div class="quote">"Senior: Implementar en 2 microservicios... Cumplir las funcionalidades F1, F2, F3, F4, F5, F6, F7"</div>
+        <p>Se separa en dos procesos independientes y se integra un broker real para eventos.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Factores no funcionales</h3>
+        <p class="muted">ID: L020</p>
+        <div class="quote">"La solucion debe contemplar... rendimiento, escalabilidad, resiliencia."</div>
+        <p>Se documentan decisiones como desacoplamiento por eventos, escalado por servicio y limites de transaccion.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Generacion de API REST</h3>
+        <p class="muted">ID: L021</p>
+        <div class="quote">"Generacion de Api Rest \"Application Programming Interface\""</div>
+        <p>Se definen controladores REST con rutas y verbos estandar.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Verbos HTTP</h3>
+        <p class="muted">ID: L022</p>
+        <div class="quote">"Manejar los verbos: Get, Post, Put, Push, delete"</div>
+        <p>Se implementan GET/POST/PUT/DELETE en los recursos; se documenta que "Push" no es verbo HTTP y se omite.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>Entidad Persona</h3>
+        <p class="muted">ID: L024</p>
+        <div class="quote">"Implementar la clase persona con los siguientes datos: nombre, genero, edad, identificacion, direccion, telefono"</div>
+        <p>Se definen campos obligatorios en la entidad Persona con validaciones basicas.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>PK en Persona</h3>
+        <p class="muted">ID: L025</p>
+        <div class="quote">"Debe manera su clave primaria (PK)"</div>
+        <p>Se usa identificador autogenerado o natural segun el modelo definido.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>Herencia Cliente</h3>
+        <p class="muted">ID: L027</p>
+        <div class="quote">"Cliente debe manejar una entidad, que herede de la clase persona."</div>
+        <p>Se implementa herencia JPA con estrategia JOINED para cumplir el requisito.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>Atributos Cliente</h3>
+        <p class="muted">ID: L028</p>
+        <div class="quote">"Un cliente tiene: clienteid, contrasena, estado."</div>
+        <p>Se modelan los campos exactos con validacion y persistencia.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>PK en Cliente</h3>
+        <p class="muted">ID: L029</p>
+        <div class="quote">"El cliente debe tener una clave unica. (PK)"</div>
+        <p>Se define PK propia del cliente para garantizar unicidad a nivel de base de datos.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>Entidad Cuenta</h3>
+        <p class="muted">ID: L031</p>
+        <div class="quote">"Cuenta debe manejar una entidad"</div>
+        <p>Cuenta se modela como entidad con su ciclo de vida y repositorio propio.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>Atributos Cuenta</h3>
+        <p class="muted">ID: L032</p>
+        <div class="quote">"Una cuenta tiene: numero cuenta, tipo cuenta, saldo Inicial, estado."</div>
+        <p>Se define el modelo con restricciones de negocio para saldo y estado.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>PK en Cuenta</h3>
+        <p class="muted">ID: L033</p>
+        <div class="quote">"Debe manejar su Clave unica"</div>
+        <p>Se asegura unicidad del numero de cuenta.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>Entidad Movimiento</h3>
+        <p class="muted">ID: L035</p>
+        <div class="quote">"Movimientos debe manejar una entidad"</div>
+        <p>Movimiento se modela como entidad persistente para trazabilidad.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>Atributos Movimiento</h3>
+        <p class="muted">ID: L036</p>
+        <div class="quote">"Un movimiento tiene: Fecha, tipo movimiento, valor, saldo"</div>
+        <p>Se define entidad con fecha y saldo posterior para auditoria.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>PK en Movimiento</h3>
+        <p class="muted">ID: L037</p>
+        <div class="quote">"Debe manejar su Clave unica"</div>
+        <p>Se crea un identificador unico por movimiento.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>Operaciones del API</h3>
+        <p class="muted">ID: L039</p>
+        <div class="quote">"Los API's debe tener las siguientes operaciones:"</div>
+        <p>Se documentan operaciones CRUD y reporte como parte de la API publica.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F1">F1</button> CRUDs</h3>
+        <p class="muted">ID: L040</p>
+        <div class="quote">"F1: Generacion de CRUDS (Crear, editar, actualizar y eliminar registros - Entidades: Cliente, Cuenta y Movimiento)."</div>
+        <p>Se implementan endpoints CRUD completos para las tres entidades.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3>Nombres de endpoints</h3>
+        <p class="muted">ID: L041-L044</p>
+        <div class="quote">"/cuentas" "/clientes" "/movimientos"</div>
+        <p>Se usan exactamente esos path para evitar inconsistencias en validacion.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F2">F2</button> Registro de movimientos</h3>
+        <p class="muted">ID: L045</p>
+        <div class="quote">"F2: Registro de movimientos: al registrar un movimiento en la cuenta se debe tener en cuenta lo siguiente:"</div>
+        <p>Se valida el signo del movimiento y se persiste saldo resultante junto al historial.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F2">F2</button> Valores positivos o negativos</h3>
+        <p class="muted">ID: L046</p>
+        <div class="quote">"Para un movimiento se pueden tener valores positivos o negativos."</div>
+        <p>Se soportan abonos y retiros mediante signo del valor.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F2">F2</button> Actualizar saldo disponible</h3>
+        <p class="muted">ID: L047</p>
+        <div class="quote">"Al realizar un movimiento se debe actualizar el saldo disponible."</div>
+        <p>Se actualiza el saldo en la cuenta y se persiste el saldo posterior en el movimiento.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F2">F2</button> Registro de transacciones</h3>
+        <p class="muted">ID: L048</p>
+        <div class="quote">"Se debe llevar el registro de las transacciones realizadas"</div>
+        <p>Se almacena cada movimiento con fecha, tipo, valor y saldo resultante.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F3">F3</button> Saldo no disponible</h3>
+        <p class="muted">ID: L049-L050</p>
+        <div class="quote">"alertar mediante el siguiente mensaje \"Saldo no disponible\""</div>
+        <p>Se lanza excepcion especifica con el mensaje exacto para cumplir el requerimiento.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F3">F3</button> Manejo del error</h3>
+        <p class="muted">ID: L051</p>
+        <div class="quote">"Defina, segun su expertise, la mejor manera de capturar y mostrar el error."</div>
+        <p>Se usa handler global para mapear excepciones a respuestas JSON consistentes.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F4">F4</button> Reporte de estado de cuenta</h3>
+        <p class="muted">ID: L052</p>
+        <div class="quote">"F4: Reportes: Generar un reporte de \"Estado de cuenta\" especificando un rango de fechas y cliente."</div>
+        <p>Se implementa endpoint de reportes filtrado por cliente y rango de fechas.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F4">F4</button> Contenido del reporte</h3>
+        <p class="muted">ID: L053-L055</p>
+        <div class="quote">"Cuentas asociadas con sus respectivos saldos" y "Detalle de movimientos de las cuentas"</div>
+        <p>El DTO incluye cuentas y movimientos en la misma respuesta JSON.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F4">F4</button> Endpoint de reportes</h3>
+        <p class="muted">ID: L056-L057</p>
+        <div class="quote">"(/reportes?fecha=rango fechas)"</div>
+        <p>Se utiliza el endpoint exacto y se define un formato de rango consistente.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F4">F4</button> Formato JSON</h3>
+        <p class="muted">ID: L058</p>
+        <div class="quote">"El servicio del reporte debe retornar la informacion en formato JSON"</div>
+        <p>Se retorna JSON con campos legibles y consistentes con el ejemplo dado.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F4">F4</button> Diseno de solicitud/respuesta</h3>
+        <p class="muted">ID: L059</p>
+        <div class="quote">"Defina, segun su expertise, la mejor manera de solicitar y retornar esta informacion."</div>
+        <p>Se define un DTO claro y parametros de consulta estandar.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F5">F5</button> Prueba unitaria Cliente</h3>
+        <p class="muted">ID: L060</p>
+        <div class="quote">"Implementar 1 prueba unitaria para la entidad de dominio Cliente."</div>
+        <p>Se crea prueba que valida reglas basicas del Cliente.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F6">F6</button> Prueba de integracion</h3>
+        <p class="muted">ID: L061</p>
+        <div class="quote">"Implementar 1 prueba de integracion."</div>
+        <p>Se prueba un flujo real con DB y web layer para asegurar integracion completa.</p>
+      </div>
+
+      <div class="justif level-2">
+        <h3><button class="modal-trigger" data-modal="F7">F7</button> Contenedores</h3>
+        <p class="muted">ID: L062</p>
+        <div class="quote">"Despliegue de la solucion en contenedores"</div>
+        <p>Docker y compose son parte del entregable para ejecutarse localmente.</p>
+      </div>
+
+      <div class="justif level-3">
+        <h3>Casos de uso - Creacion de Usuarios</h3>
+        <p class="muted">ID: L064</p>
+        <div class="quote">"1. Creacion de Usuarios."</div>
+        <p>Se usan los datos de ejemplo para poblar BaseDatos.sql y validar endpoints.</p>
+      </div>
+
+      <div class="justif level-3">
+        <h3>Casos de uso - Creacion de Cuentas de Usuario</h3>
+        <p class="muted">ID: L089</p>
+        <div class="quote">"2. Creacion de Cuentas de Usuario."</div>
+        <p>Se incluyen cuentas iniciales en el script de datos para pruebas.</p>
+      </div>
+
+      <div class="justif level-3">
+        <h3>Casos de uso - Nueva cuenta corriente</h3>
+        <p class="muted">ID: L120</p>
+        <div class="quote">"3. Crear una nueva Cuenta Corriente para Jose Lema"</div>
+        <p>Se prueba el alta de cuentas en el endpoint /cuentas.</p>
+      </div>
+
+      <div class="justif level-3">
+        <h3>Casos de uso - Movimientos</h3>
+        <p class="muted">ID: L133</p>
+        <div class="quote">"4. Realizar los siguientes movimientos"</div>
+        <p>Se valida el flujo de movimientos con abonos y retiros.</p>
+      </div>
+
+      <div class="justif level-3">
+        <h3>Casos de uso - Listado por fechas</h3>
+        <p class="muted">ID: L164</p>
+        <div class="quote">"5. Listado de Movimiento, por fechas x usuario."</div>
+        <p>Se verifica /reportes con rango de fechas y cliente.</p>
+      </div>
+
+      <div class="justif level-3">
+        <h3>Ejemplo JSON</h3>
+        <p class="muted">ID: L192</p>
+        <div class="quote">"Ejemplo Json:"</div>
+        <p>Se utiliza como referencia para el formato de respuesta del reporte.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Script BaseDatos.sql</h3>
+        <p class="muted">ID: L195</p>
+        <div class="quote">"Generar el script de base datos, entidades y esquema datos, con el nombre BaseDatos.sql."</div>
+        <p>Se entrega un script reproducible con esquema y datos de ejemplo.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Postman para verificacion</h3>
+        <p class="muted">ID: L196</p>
+        <div class="quote">"Ejecutar Postman para poder realizar las verificaciones"</div>
+        <p>Se incluye la coleccion Postman con requests y variables.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Ruta de API</h3>
+        <p class="muted">ID: L197</p>
+        <div class="quote">"(http://{servidor}:{puerto}/api/{metodo}...{Parametros})"</div>
+        <p>Se documenta la ruta base y se agrega un prefijo /api en los controladores.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Repositorio Git publico</h3>
+        <p class="muted">ID: L199</p>
+        <div class="quote">"La Solucion debe ser cargado a un repositorio Git publico, se debe enviar la ruta de este repositorio."</div>
+        <p>Se prepara repositorio con README y pasos de ejecucion.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Json de Postman</h3>
+        <p class="muted">ID: L200</p>
+        <div class="quote">"Descarga archivo Json, de Aplicacion Postman, para validacion de los endpoints."</div>
+        <p>Se exporta la coleccion como JSON e incluye en el repo.</p>
+      </div>
+
+      <div class="justif level-1">
+        <h3>Entrega a tiempo</h3>
+        <p class="muted">ID: L201</p>
+        <div class="quote">"Se debe entregar antes de la fecha y hora indicada por correo."</div>
+        <p>Se prioriza el cierre de requisitos esenciales para asegurar entrega puntual.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="modalOverlay" class="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h4 id="modalTitle">Enunciado</h4>
+      <p id="modalBody"></p>
+      <div class="modal-actions">
+        <button class="modal-close" type="button">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var overlay = document.getElementById('modalOverlay');
+      var titleEl = document.getElementById('modalTitle');
+      var bodyEl = document.getElementById('modalBody');
+      var closeBtn = overlay.querySelector('.modal-close');
+      var map = {
+        F1: 'F1: Generacion de CRUDS (Crear, editar, actualizar y eliminar registros - Entidades: Cliente, Cuenta y Movimiento).',
+        F2: 'F2: Registro de movimientos: al registrar un movimiento en la cuenta se debe tener en cuenta lo siguiente: valores positivos o negativos, actualizacion del saldo disponible y registro de transacciones.',
+        F3: 'F3: Registro de movimientos: al realizar un movimiento el cual no cuente con saldo, debe alertar mediante el siguiente mensaje "Saldo no disponible".',
+        F4: 'F4: Reportes: Generar un reporte de "Estado de cuenta" especificando un rango de fechas y cliente, con cuentas asociadas, saldos y detalle de movimientos, en formato JSON.',
+        F5: 'F5: Pruebas unitarias: Implementar 1 prueba unitaria para la entidad de dominio Cliente.',
+        F6: 'F6: Pruebas de Integracion: Implementar 1 prueba de integracion.',
+        F7: 'F7: Despliegue de la solucion en contenedores.'
+      };
+      document.querySelectorAll('.modal-trigger').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var key = btn.getAttribute('data-modal');
+          titleEl.textContent = key + ' - Enunciado';
+          bodyEl.textContent = map[key] || '';
+          overlay.classList.add('active');
+          overlay.setAttribute('aria-hidden', 'false');
+        });
+      });
+      function closeModal() {
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+      closeBtn.addEventListener('click', closeModal);
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) { closeModal(); }
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { closeModal(); }
+      });
+    })();
+  </script>
+
+</body>
+</html>
