@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ejercicio Tecnico - Backend</title>
+<style>
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #fafbfc; color: #23272f; margin: 0; padding: 0; }
+.container { max-width: 950px; margin: 40px auto; background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.08); border-radius: 10px; padding: 32px 40px; }
+h1 { color: #1565c0; }
+h2 { color: #2e7d32; margin-top: 32px; }
+h3 { color: #7b1fa2; margin-top: 24px; }
+.note { background: #e3f2fd; border-left: 4px solid #1976d2; padding: 16px 20px; margin: 18px 0; border-radius: 7px; }
+.note ul { list-style: disc inside; margin: 0; padding-left: 1.2em; }
+.note li { margin-bottom: 3px; line-height: 1.35; }
+.note p { margin: 0 0 6px 0; line-height: 1.5; }
+.footer { text-align: right; color: #888; font-size: 1em; margin-top: 40px; }
+.tag { background: #e3f2fd; color: #1565c0; border-radius: 4px; padding: 3px 8px; margin-left: 6px; font-size: 0.95em; }
+dt { color: #2e7d32; font-weight: bold; margin-top: 10px; }
+dd { margin-bottom: 10px; }
+.params table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+.params th, .params td { border: 1px solid #ccc; padding: 6px; }
+.important { background: #fffde7; border-left: 4px solid #fbc02d; padding: 12px 18px; margin: 18px 0; border-radius: 5px; }
+.sideEffects ul, .solid ul { margin: 0; padding-left: 20px; }
+@media (max-width: 600px) { .container { padding: 16px 8px; } }
+pre { background: #f6f8fa; padding: 14px; border-radius: 8px; overflow: auto; font-size: 0.92em; }
+code { font-family: Consolas, 'Courier New', monospace; }
+.row { display:flex; gap:20px; flex-wrap:wrap; }
+.col { flex:1 1 420px; }
+.endpoint { border: 1px solid #e0e0e0; padding: 12px 14px; border-radius: 8px; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.04); }
+.json { white-space: pre; font-family: Consolas, 'Courier New', monospace; font-size: 0.95em; }
+.success { color: #2e7d32; font-weight: 600; }
+.error { color: #c62828; font-weight: 600; }
+/* additional styling */
+:root { --ink: #1f2430; --accent: #1565c0; --mint: #2e7d32; --violet: #7b1fa2; --paper: #ffffff; --soft: #f6f8fb; }
+body { background: radial-gradient(circle at 15% 20%, #eef5ff 0%, #fafbfc 45%), radial-gradient(circle at 80% 10%, #f2fff7 0%, #fafbfc 40%); }
+.app { position: relative; }
+.hero { padding: 18px 18px 22px; border-radius: 12px; background: linear-gradient(135deg, #e3f2fd 0%, #f5f7ff 55%, #f6fff9 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.7); margin-bottom: 24px; }
+.hero-title { font-family: 'Palatino Linotype', 'Book Antiqua', serif; font-size: 2.2rem; margin: 0; }
+.hero-sub { margin: 6px 0 0; color: #4b5563; font-weight: 600; }
+.section { padding: 18px 20px; background: var(--paper); border: 1px solid #e6e9ef; border-radius: 12px; margin: 18px 0; box-shadow: 0 6px 18px rgba(15,23,42,0.06); }
+.section h1 { margin-top: 0; }
+.case-stack { display: grid; gap: 14px; }
+.case-card { padding: 14px 16px; border-radius: 10px; background: #fbfbff; border: 1px dashed #d6dcef; }
+.case-title { margin: 0 0 8px; color: #1f2937; }
+.line-item { position: relative; padding-left: 52px; }
+.line-item::before { content: attr(data-line); position: absolute; left: 0; top: 0.15rem; font-size: 0.75rem; letter-spacing: 0.08em; color: #9aa4b2; background: #eef2f7; padding: 2px 6px; border-radius: 999px; }
+.endpoint code { background: #f1f5f9; padding: 2px 6px; border-radius: 6px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #d7dce3; padding: 8px; text-align: left; }
+thead th { background: #f3f6fb; }
+.table-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main class="container app">
+<header class="hero">
+  <h1 class="hero-title line-item" data-line="L001">Prueba T&#233;cnica</h1>
+  <p class="hero-sub line-item" data-line="L002">Arquitectura Microservicio (2023)</p>
+</header>
+<section class="section">
+  <h1 class="line-item" data-line="L003">Indicaciones generales</h1>
+  <ul>
+    <li class="line-item" data-line="L004">Aplique todas las buenas pr&#225;cticas, patrones Repository, etc que considere necesario (se tomar&#225; en cuenta este punto para la calificaci&#243;n).</li>
+    <li class="line-item" data-line="L005">El manejo de entidades se debe manejar JPA / Entity Framework Core</li>
+    <li class="line-item" data-line="L006">Se debe manejar mensajes de excepciones.</li>
+    <li class="line-item" data-line="L007">Se debe realizar como m&#237;nimo dos pruebas unitarias de los endpoints.</li>
+    <li class="line-item" data-line="L008">La soluci&#243;n se debe desplegar en Docker.</li>
+    <li class="line-item" data-line="L009">Posterior a la entrega de este ejercicio, se estar&#225; agendando una entrevista t&#233;cnica donde el candidato deber&#225; defender la soluci&#243;n planteada.</li>
+  </ul>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L010">Herramientas y tecnolog&#237;as utilizadas</h1>
+  <ul>
+    <li class="line-item" data-line="L011">Java spring boot / NetCore 5 o superior / Asp 4.8 o inferior</li>
+    <li class="line-item" data-line="L012">IDE de su preferencia</li>
+    <li class="line-item" data-line="L013">Base de Datos Relacional</li>
+    <li class="line-item" data-line="L014">Postman v9.13.2 (validador de API) / Karate DSL</li>
+  </ul>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L015">Complejidad por Seniority</h1>
+  <p class="note line-item" data-line="L016">Nota: Considerar las siguientes indicaciones en base al perfil al que esta aplicando, Ejemplo: si es un perfil SemiSenior solo realizar lo indicado para este perfil.</p>
+  <p class="line-item" data-line="L017">Junior: Implementar los diferentes endpoints para cumplir las funcionalidades: F1, F2, F3, no es mandatorio funcionalidades: F4, F5, F6.</p>
+  <p class="line-item" data-line="L018">SemiSenior: Separar en 2 microservicios, agrupando (Cliente, Persona) y (Cuenta, Movimientos) donde se contemple una comunicaci&#243;n asincr&#243;nica entre los 2 microservicios. Cumplir las funcionalidades: F1, F2, F3, F4, F5 deseable la funcionalidad F6.</p>
+  <p class="line-item" data-line="L019">Senior: Implementar en 2 microservicios, agrupando (Cliente, Persona) y (Cuenta, Movimientos) donde se contemple una comunicaci&#243;n asincr&#243;nica entre los 2 microservicios. Cumplir las funcionalidades F1, F2, F3, F4, F5, F6, F7</p>
+  <p class="line-item" data-line="L020">La soluci&#243;n debe contemplar (no necesariamente implementado) factores como: rendimiento, escalabilidad, resiliencia.</p>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L021">Generaci&#243;n de Api Rest &#8220;Application Programming Interface&#8221;</h1>
+  <p class="line-item" data-line="L022">Manejar los verbos: Get, Post, Put, Push, delete</p>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L023">Persona</h1>
+  <ul>
+    <li class="line-item" data-line="L024">Implementar la clase persona con los siguientes datos: nombre, genero, edad, identificaci&#243;n, direcci&#243;n, tel&#233;fono</li>
+    <li class="line-item" data-line="L025">Debe manera su clave primaria (PK)</li>
+  </ul>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L026">Cliente</h1>
+  <ul>
+    <li class="line-item" data-line="L027">Cliente debe manejar una entidad, que herede de la clase persona.</li>
+    <li class="line-item" data-line="L028">Un cliente tiene: clienteid, contrase&#241;a, estado.</li>
+    <li class="line-item" data-line="L029">El cliente debe tener una clave &#250;nica. (PK)</li>
+  </ul>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L030">Cuenta.</h1>
+  <ul>
+    <li class="line-item" data-line="L031">Cuenta debe manejar una entidad</li>
+    <li class="line-item" data-line="L032">Una cuenta tiene: n&#250;mero cuenta, tipo cuenta, saldo Inicial, estado.</li>
+    <li class="line-item" data-line="L033">Debe manejar su Clave &#250;nica</li>
+  </ul>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L034">Movimientos</h1>
+  <ul>
+    <li class="line-item" data-line="L035">Movimientos debe manejar una entidad</li>
+    <li class="line-item" data-line="L036">Un movimiento tiene: Fecha, tipo movimiento, valor, saldo</li>
+    <li class="line-item" data-line="L037">Debe manejar su Clave &#250;nica</li>
+  </ul>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L038">Funcionalidades del API</h1>
+  <p class="line-item" data-line="L039">Los API&#8217;s debe tener las siguientes operaciones:</p>
+  <p class="line-item" data-line="L040">F1: Generaci&#243;n de CRUDS (Crear, editar, actualizar y eliminar registros - Entidades: Cliente, Cuenta y Movimiento).</p>
+  <p class="line-item" data-line="L041">Los nombres de los endpoints a generar son:</p>
+  <ul>
+    <li class="line-item" data-line="L042"><code>/cuentas</code></li>
+    <li class="line-item" data-line="L043"><code>/clientes</code></li>
+    <li class="line-item" data-line="L044"><code>/movimientos</code></li>
+  </ul>
+  <p class="line-item" data-line="L045">F2: Registro de movimientos: al registrar un movimiento en la cuenta se debe tener en cuenta lo siguiente:</p>
+  <ul>
+    <li class="line-item" data-line="L046">Para un movimiento se pueden tener valores positivos o negativos.</li>
+    <li class="line-item" data-line="L047">Al realizar un movimiento se debe actualizar el saldo disponible.</li>
+    <li class="line-item" data-line="L048">Se debe llevar el registro de las transacciones realizadas</li>
+  </ul>
+  <p class="line-item" data-line="L049">F3: Registro de movimientos: Al realizar un movimiento el cual no cuente con saldo, debe</p>
+  <p class="important line-item" data-line="L050">alertar mediante el siguiente mensaje &#8220;Saldo no disponible&#8221;</p>
+  <ul>
+    <li class="line-item" data-line="L051">Defina, seg&#250;n su expertise, la mejor manera de capturar y mostrar el error.</li>
+  </ul>
+  <p class="line-item" data-line="L052">F4: Reportes: Generar un reporte de &#8220;Estado de cuenta&#8221; especificando un rango de fechas y cliente.</p>
+  <ul>
+    <li class="line-item" data-line="L053">Este reporte debe contener:</li>
+    <li class="line-item" data-line="L054">o Cuentas asociadas con sus respectivos saldos</li>
+    <li class="line-item" data-line="L055">o Detalle de movimientos de las cuentas</li>
+    <li class="line-item" data-line="L056">EL endpoint de que sebe utilizar para esto debe ser el siguiente:</li>
+    <li class="line-item" data-line="L057">o (/reportes?fecha=rango fechas)</li>
+    <li class="line-item" data-line="L058">El servicio del reporte debe retornar la informaci&#243;n en formato JSON</li>
+    <li class="line-item" data-line="L059">o Defina, seg&#250;n su expertise, la mejor manera de solicitar y retornar esta informaci&#243;n.</li>
+  </ul>
+  <p class="line-item" data-line="L060">F5: Pruebas unitarias: Implementar 1 prueba unitaria para la entidad de dominio Cliente.</p>
+  <p class="line-item" data-line="L061">F6: Pruebas de Integraci&#243;n: Implementar 1 prueba de integraci&#243;n.</p>
+  <p class="line-item" data-line="L062">F7: Despliegue de la soluci&#243;n en contenedores</p>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L063">Casos de Uso (Ejemplos)</h1>
+<div class="case-stack">
+  <div class="case-card">
+    <h3 class="case-title line-item" data-line="L064">1. Creaci&#243;n de Usuarios.</h3>
+    <div class="table-wrap line-item" data-line="L065">
+      <table>
+        <thead><tr>
+          <th data-line="L066">Nombres</th>
+          <th data-line="L067">Direcci&#243;n</th>
+          <th data-line="L068">Tel&#233;fono</th>
+          <th data-line="L069">Contrase&#241;a</th>
+          <th data-line="L070">estado</th>
+        </tr></thead>
+        <tbody>
+          <tr data-line="L071">
+            <td data-line="L072">Jose Lema</td>
+            <td data-line="L073">Otavalo sn y principal</td>
+            <td data-line="L074">098254785</td>
+            <td data-line="L075">1234</td>
+            <td data-line="L076">True</td>
+          </tr>
+          <tr data-line="L077">
+            <td data-line="L078">Marianela Montalvo</td>
+            <td data-line="L079">Amazonas y NNUU</td>
+            <td data-line="L080">097548965</td>
+            <td data-line="L081">5678</td>
+            <td data-line="L082">True</td>
+          </tr>
+          <tr data-line="L083">
+            <td data-line="L084">Juan Osorio</td>
+            <td data-line="L085">13 junio y Equinoccial</td>
+            <td data-line="L086">098874587</td>
+            <td data-line="L087">1245</td>
+            <td data-line="L088">True</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="case-card">
+    <h3 class="case-title line-item" data-line="L089">2. Creaci&#243;n de Cuentas de Usuario.</h3>
+    <div class="table-wrap line-item" data-line="L090">
+      <table>
+        <thead><tr>
+          <th data-line="L091">Numero Cuenta</th>
+          <th data-line="L092">Tipo</th>
+          <th data-line="L093">Saldo Inicial</th>
+          <th data-line="L094">Estado</th>
+          <th data-line="L095">Cliente</th>
+        </tr></thead>
+        <tbody>
+          <tr data-line="L096">
+            <td data-line="L097">478758</td>
+            <td data-line="L098">Ahorro</td>
+            <td data-line="L099">2000</td>
+            <td data-line="L100">True</td>
+            <td data-line="L101">Jose Lema</td>
+          </tr>
+          <tr data-line="L102">
+            <td data-line="L103">225487</td>
+            <td data-line="L104">Corriente</td>
+            <td data-line="L105">100</td>
+            <td data-line="L106">True</td>
+            <td data-line="L107">Marianela Montalvo</td>
+          </tr>
+          <tr data-line="L108">
+            <td data-line="L109">495878</td>
+            <td data-line="L110">Ahorros</td>
+            <td data-line="L111">0</td>
+            <td data-line="L112">True</td>
+            <td data-line="L113">Juan Osorio</td>
+          </tr>
+          <tr data-line="L114">
+            <td data-line="L115">496825</td>
+            <td data-line="L116">Ahorros</td>
+            <td data-line="L117">540</td>
+            <td data-line="L118">True</td>
+            <td data-line="L119">Marianela Montalvo</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="case-card">
+    <h3 class="case-title line-item" data-line="L120">3. Crear una nueva Cuenta Corriente para Jose Lema</h3>
+    <div class="table-wrap line-item" data-line="L121">
+      <table>
+        <thead><tr>
+          <th data-line="L122">Numero Cuenta</th>
+          <th data-line="L123">Tipo</th>
+          <th data-line="L124">Saldo Inicial</th>
+          <th data-line="L125">Estado</th>
+          <th data-line="L126">Cliente</th>
+        </tr></thead>
+        <tbody>
+          <tr data-line="L127">
+            <td data-line="L128">585545</td>
+            <td data-line="L129">Corriente</td>
+            <td data-line="L130">1000</td>
+            <td data-line="L131">True</td>
+            <td data-line="L132">Jose Lema</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="case-card">
+    <h3 class="case-title line-item" data-line="L133">4. Realizar los siguientes movimientos</h3>
+    <div class="table-wrap line-item" data-line="L134">
+      <table>
+        <thead><tr>
+          <th data-line="L135">Numero Cuenta</th>
+          <th data-line="L136">Tipo</th>
+          <th data-line="L137">Saldo Inicial</th>
+          <th data-line="L138">Estado</th>
+          <th data-line="L139">Movimiento</th>
+        </tr></thead>
+        <tbody>
+          <tr data-line="L140">
+            <td data-line="L141">478758</td>
+            <td data-line="L142">Ahorro</td>
+            <td data-line="L143">2000</td>
+            <td data-line="L144">True</td>
+            <td data-line="L145">Retiro de 575</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap line-item" data-line="L146">
+      <table>
+        <thead><tr>
+          <th data-line="L147">225487</th>
+          <th data-line="L148">Corriente</th>
+          <th data-line="L149">100</th>
+          <th data-line="L150">True</th>
+          <th data-line="L151">Deposito de 600</th>
+        </tr></thead>
+        <tbody>
+          <tr data-line="L152">
+            <td data-line="L153">495878</td>
+            <td data-line="L154">Ahorros</td>
+            <td data-line="L155">0</td>
+            <td data-line="L156">True</td>
+            <td data-line="L157">Deposito de 150</td>
+          </tr>
+          <tr data-line="L158">
+            <td data-line="L159">496825</td>
+            <td data-line="L160">Ahorros</td>
+            <td data-line="L161">540</td>
+            <td data-line="L162">True</td>
+            <td data-line="L163">Retiro de 540</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="case-card">
+    <h3 class="case-title line-item" data-line="L164">5. Listado de Movimiento, por fechas x usuario.</h3>
+    <div class="table-wrap line-item" data-line="L165">
+      <table>
+        <thead><tr>
+          <th data-line="L166">Fecha</th>
+          <th data-line="L167">Cliente</th>
+          <th data-line="L168">Numero Cuenta</th>
+          <th data-line="L169">Tipo</th>
+          <th data-line="L170">Saldo Inicial</th>
+          <th data-line="L171">Estado</th>
+          <th data-line="L172">Movimiento</th>
+          <th data-line="L173">Saldo Disponible</th>
+        </tr></thead>
+        <tbody>
+          <tr data-line="L174">
+            <td data-line="L175">10/2/2022</td>
+            <td data-line="L176">Marianela Montalvo</td>
+            <td data-line="L177">225487</td>
+            <td data-line="L178">Corriente</td>
+            <td data-line="L179">100</td>
+            <td data-line="L180">True</td>
+            <td data-line="L181">600</td>
+            <td data-line="L182">700</td>
+          </tr>
+          <tr data-line="L183">
+            <td data-line="L184">8/2/2022</td>
+            <td data-line="L185">Marianela Montalvo</td>
+            <td data-line="L186">496825</td>
+            <td data-line="L187">Ahorros</td>
+            <td data-line="L188">540</td>
+            <td data-line="L189">True</td>
+            <td data-line="L190">540</td>
+            <td data-line="L191">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  <p class="line-item" data-line="L192">Ejemplo Json:</p>
+  <pre class="line-item" data-line="L193"><code>{
+&quot;Fecha&quot;:&quot;10/2/2022&quot;, &quot;Cliente&quot;:&quot;Marianela Montalvo&quot;, &quot;Numero Cuenta&quot;:&quot;225487&quot; &quot;Tipo&quot;:&quot;Corriente&quot;,
+&quot;Saldo Inicial&quot;:100, &quot;Estado&quot;:true, &quot;Movimiento&quot;:600, &quot;Saldo Disponible&quot;:700
+}</code></pre>
+  </div>
+</div>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L194">Instrucciones de despliegue</h1>
+  <ul>
+    <li class="line-item" data-line="L195">Generar el script de base datos, entidades y esquema datos, con el nombre BaseDatos.sql.</li>
+    <li class="line-item" data-line="L196">Ejecutar Postman para poder realizar las verificaciones</li>
+  </ul>
+  <p class="endpoint line-item" data-line="L197"><code>(http://{servidor}:{puerto}/api/{metodo}...{Par&#225;metros})</code></p>
+</section>
+<section class="section">
+  <h1 class="line-item" data-line="L198">Entregables</h1>
+  <ul>
+    <li class="line-item" data-line="L199">La Soluci&#243;n debe ser cargado a un repositorio Git p&#250;blico, se debe enviar la ruta de este repositorio.</li>
+    <li class="line-item" data-line="L200">Descarga archivo Json, de Aplicaci&#243;n Postman, para validaci&#243;n de los endpoints.</li>
+    <li class="line-item" data-line="L201">Se debe entregar antes de la fecha y hora indicada por correo.</li>
+  </ul>
+</section>
+<p class="footer">Documento transcrito y estilizado.</p>
+</main>
+</body>
+</html>
