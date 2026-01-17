@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #fafbfc; color: #23272f; margin: 0; padding: 0; }
+  .container { max-width: 950px; margin: 40px auto; background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.08); border-radius: 10px; padding: 32px 40px; }
+  h1 { color: #1565c0; }
+  h2 { color: #2e7d32; margin-top: 32px; }
+  h3 { color: #7b1fa2; margin-top: 24px; }
+  .note { background: #e3f2fd; border-left: 4px solid #1976d2; padding: 16px 20px; margin: 18px 0; border-radius: 7px; }
+  .note ul { list-style: disc inside; margin: 0; padding-left: 1.2em; }
+  .note li { margin-bottom: 3px; line-height: 1.35; }
+  .note p { margin: 0 0 6px 0; line-height: 1.5; }
+  .footer { text-align: right; color: #888; font-size: 1em; margin-top: 40px; }
+  .tag { background: #e3f2fd; color: #1565c0; border-radius: 4px; padding: 3px 8px; margin-left: 6px; font-size: 0.95em; }
+  dt { color: #2e7d32; font-weight: bold; margin-top: 10px; }
+  dd { margin-bottom: 10px; }
+  .params table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  .params th, .params td { border: 1px solid #ccc; padding: 6px; }
+  .important { background: #fffde7; border-left: 4px solid #fbc02d; padding: 12px 18px; margin: 18px 0; border-radius: 5px; }
+  .sideEffects ul, .solid ul { margin: 0; padding-left: 20px; }
+  @media (max-width: 600px) { .container { padding: 16px 8px; } }
+  /* Code block styling */
+  pre { background: #f6f8fa; padding: 14px; border-radius: 8px; overflow: auto; font-size: 0.92em; }
+  code { font-family: Consolas, 'Courier New', monospace; }
+  .row { display:flex; gap:20px; flex-wrap:wrap; }
+  .col { flex:1 1 420px; }
+  /* Small visual helpers */
+  .endpoint { border: 1px solid #e0e0e0; padding: 12px 14px; border-radius: 8px; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.04); }
+  .json { white-space: pre; font-family: Consolas, 'Courier New', monospace; font-size: 0.95em; }
+  .success { color: #2e7d32; font-weight: 600; }
+  .error { color: #c62828; font-weight: 600; }
+  </style>
+  <title>Informe de arquitectura e implementación</title>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Informe de arquitectura e implementación</h1>
+      <p>Microservicios ms-clientes-personas y ms-cuentas-movimientos, con mensajería asíncrona via Kafka y despliegue en contenedores Docker.</p>
+    </header>
+
+    <section>
+      <h2>Visión general</h2>
+      <p>La solución está compuesta por dos microservicios Spring Boot (Java 21, Spring Boot 3.2.2) y servicios de infraestructura en Docker: MySQL 8.3 como base de datos relacional y Kafka (Confluent KRaft) como broker de eventos. Ambos microservicios se empaquetan en imágenes independientes (ms-clientes y ms-cuentas), comparten la base de datos <code>banco</code> y se comunican de forma asíncrona por eventos de cliente.</p>
+      <div class="note">
+        <p><strong>Objetivo:</strong> cumplir F1-F7 del enunciado, con separación de dominios (Clientes/Personas y Cuentas/Movimientos), herencia JPA, validación de saldo, reportes, pruebas básicas y despliegue docker-compose.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Componentes y contenedores</h2>
+      <div class="row">
+        <div class="col endpoint">
+          <h3>ms-clientes-personas</h3>
+          <ul>
+            <li>Puerto: 8081</li>
+            <li>Base de datos: MySQL (schema banco)</li>
+            <li>Endpoints REST: <code>/api/clientes</code> (CRUD)</li>
+            <li>Eventos publicados a Kafka: <code>clientes.eventos</code></li>
+          </ul>
+        </div>
+        <div class="col endpoint">
+          <h3>ms-cuentas-movimientos</h3>
+          <ul>
+            <li>Puerto: 8082</li>
+            <li>Base de datos: MySQL (schema banco)</li>
+            <li>Endpoints REST: <code>/api/cuentas</code>, <code>/api/movimientos</code>, <code>/api/reportes</code></li>
+            <li>Consume eventos <code>clientes.eventos</code> para validar clientes activos.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col endpoint">
+          <h3>Kafka (KRaft)</h3>
+          <ul>
+            <li>Imagen: <code>confluentinc/cp-kafka:7.6.1</code></li>
+            <li>Listener: PLAINTEXT <code>kafka:9092</code></li>
+            <li>Topic: <code>clientes.eventos</code> (auto-creation habilitado)</li>
+            <li>CLUSTER_ID fijo para evitar errores de arranque.</li>
+          </ul>
+        </div>
+        <div class="col endpoint">
+          <h3>MySQL</h3>
+          <ul>
+            <li>Imagen: <code>mysql:8.3</code></li>
+            <li>Healthcheck para coordinar arranque de microservicios.</li>
+            <li>BD: <code>banco</code>, credenciales root/root (en compose, solo para desarrollo).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Modelo de datos y reglas clave</h2>
+      <ul>
+        <li><strong>Persona</strong>: nombre, género, edad, identificación (única), dirección, teléfono.</li>
+        <li><strong>Cliente</strong> extiende Persona: contrase&ntilde;a, estado.</li>
+        <li><strong>Cuenta</strong>: númeroCuenta (único), tipoCuenta, saldoInicial, estado, clienteId.</li>
+        <li><strong>Movimiento</strong>: fecha, tipoMovimiento, valor (positivo/negativo), saldo resultante, cuenta.</li>
+        <li><strong>Regla de negocio</strong>: Si un movimiento deja saldo negativo, se lanza mensaje exacto <code>&quot;Saldo no disponible&quot;</code>.</li>
+      </ul>
+      <div class="important">
+        <p>Herencia JPA obligatoria: <code>Cliente extends Persona</code> usando <code>@Inheritance(strategy = JOINED)</code>, cumpliendo el enunciado.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Comunicación entre servicios</h2>
+      <p><strong>Asíncrona por eventos Kafka:</strong> ms-clientes-personas publica eventos al topic <code>clientes.eventos</code> cuando se crea o actualiza un cliente. ms-cuentas-movimientos consume el topic y mantiene un <em>snapshot</em> local (tabla <code>cliente_snapshot</code>) con estado del cliente. Las operaciones de cuentas/movimientos se validan contra ese snapshot para asegurar que el cliente esté activo.</p>
+      <div class="note">
+        <ul>
+          <li><strong>Producer:</strong> <code>KafkaTemplate</code> en ms-clientes envía <code>ClienteEvent</code> (id, estado, tipo).</li>
+          <li><strong>Consumer:</strong> Listener en ms-cuentas (<code>@KafkaListener</code>) actualiza <code>cliente_snapshot</code>.</li>
+          <li><strong>Resiliencia:</strong> Auto-create topics habilitado y retries por defecto del cliente Kafka.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Endpoints expuestos</h2>
+      <div class="row">
+        <div class="col">
+          <h3>ms-clientes-personas (8081)</h3>
+          <div class="endpoint">
+            <p><code>GET /api/clientes</code> — listar</p>
+            <p><code>GET /api/clientes/{id}</code> — obtener</p>
+            <p><code>POST /api/clientes</code> — crear</p>
+            <p><code>PUT /api/clientes/{id}</code> — actualizar</p>
+            <p><code>DELETE /api/clientes/{id}</code> — eliminar</p>
+          </div>
+        </div>
+        <div class="col">
+          <h3>ms-cuentas-movimientos (8082)</h3>
+          <div class="endpoint">
+            <p><code>GET /api/cuentas</code> — listar</p>
+            <p><code>POST /api/cuentas</code> — crear (valida cliente activo)</p>
+            <p><code>PUT /api/cuentas/{id}</code> — actualizar</p>
+            <p><code>DELETE /api/cuentas/{id}</code> — eliminar</p>
+            <p><code>GET /api/movimientos</code> — listar</p>
+            <p><code>POST /api/movimientos</code> — registrar movimiento (valida saldo, cliente/cuenta activos)</p>
+            <p><code>DELETE /api/movimientos/{id}</code> — eliminar</p>
+            <p><code>GET /api/reportes?clienteId=...&amp;fecha=yyyy-mm-dd,yyyy-mm-dd</code> — estado de cuenta con movimientos.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Despliegue y contenedores</h2>
+      <p>Se usa <code>docker-compose.yml</code> para orquestar cuatro servicios: <code>db</code> (MySQL), <code>kafka</code>, <code>ms-clientes</code>, <code>ms-cuentas</code>. Los microservicios se construyen desde sus Dockerfiles (gradlew bootJar + runtime Temurin 21). Variables de entorno configuran puertos, URL de BD y bootstrap de Kafka.</p>
+      <pre><code>services:
+  db:
+    image: mysql:8.3
+    healthcheck: mysqladmin ping -h localhost -uroot -proot
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    environment:
+      CLUSTER_ID: OtbaX0dYTlFTRURBTVBMQQ==
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+  ms-clientes:
+    build: ./backend/ms-clientes-personas
+    environment:
+      MICROSERVICIOS_DB_DATASOURCE_URL: jdbc:mysql://db:3306/banco...
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  ms-cuentas:
+    build: ./backend/ms-cuentas-movimientos
+    environment:
+      MICROSERVICIOS_DB_DATASOURCE_URL: jdbc:mysql://db:3306/banco...
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092</code></pre>
+      <div class="note">
+        <p><strong>Arranque probado:</strong> <code>docker compose up</code> mostrando Kafka estable, MySQL healthy y consumidores unidos al grupo <code>cuentas</code>.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Pruebas y validación</h2>
+      <ul>
+        <li>Prueba de integración en ms-cuentas: registra cuenta, movimiento y valida mensaje “Saldo no disponible”.</li>
+        <li>Prueba unitaria de dominio en ms-clientes: herencia y atributos básicos.</li>
+        <li>Validación manual con docker-compose logs: Kafka estabilizado, listeners conectados, MySQL listo.</li>
+      </ul>
+      <div class="important">
+        <p>Para probar manualmente: usar Swagger en 8081/8082, crear cliente → cuenta → movimiento y consultar <code>/api/reportes</code>. Los eventos de cliente se reflejan en <code>cliente_snapshot</code> consumido por ms-cuentas.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Resumen de flujo</h2>
+      <ol>
+        <li><strong>Alta/edición de cliente</strong> en ms-clientes → persiste en MySQL y publica <code>ClienteEvent</code> en Kafka.</li>
+        <li><strong>Listener de ms-cuentas</strong> consume <code>clientes.eventos</code> → actualiza tabla <code>cliente_snapshot</code>.</li>
+        <li><strong>Creación de cuenta</strong> valida snapshot de cliente activo → guarda cuenta.</li>
+        <li><strong>Movimiento</strong> actualiza saldo; si queda negativo, lanza “Saldo no disponible”.</li>
+        <li><strong>Reporte</strong> expone cuentas y movimientos por cliente y rango de fechas.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Estado actual</h2>
+      <p>En la última ejecución de <code>docker compose up</code> se observaron:</p>
+      <ul>
+        <li>Kafka estable, coordinadores electos, topic <code>clientes.eventos</code> con consumidor del grupo <code>cuentas</code>.</li>
+        <li>ms-clientes y ms-cuentas conectados a <code>kafka:9092</code> y a MySQL <code>db:3306</code> (healthcheck OK).</li>
+        <li>Warnings de MySQL sobre <code>mysql_native_password</code> (propios de la imagen 8.3, sin impacto en desarrollo).</li>
+      </ul>
+    </section>
+
+    <footer class="footer">
+      <p>Documento generado automáticamente. Arquitectura y despliegue verificados en docker-compose.</p>
+    </footer>
+  </main>
+</body>
+</html>
