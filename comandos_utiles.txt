@@ -1,0 +1,11 @@
+
+
+Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
+
+
+cd E:\PruebaTecnicaACGRArquitecturaMicroservicioSofka07Enero2025
+docker compose up --build
+
+ Start-Service docker
+
+ 
