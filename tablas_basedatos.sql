@@ -1,5 +1,5 @@
-﻿-- tablas_basedatos.sql
--- Esquema MySQL alineado al requerimiento
+-- tablas_basedatos.sql
+-- Esquema MySQL alineado al requerimiento con datos de prueba
 
 CREATE TABLE persona (
   persona_id BIGINT NOT NULL AUTO_INCREMENT,
@@ -40,7 +40,7 @@ CREATE TABLE cuenta (
 
 CREATE TABLE movimiento (
   movimiento_id BIGINT NOT NULL AUTO_INCREMENT,
-  fecha DATE NOT NULL,
+  fecha DATETIME NOT NULL,
   tipo_movimiento VARCHAR(30) NOT NULL,
   valor DECIMAL(18,2) NOT NULL,
   saldo DECIMAL(18,2) NOT NULL,
@@ -52,3 +52,25 @@ CREATE TABLE movimiento (
     FOREIGN KEY (cuenta_id) REFERENCES cuenta(cuenta_id)
     ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB;
+
+INSERT INTO persona (nombre, genero, edad, identificacion, direccion, telefono) VALUES
+('Jose Lema', 'M', 30, 'ID-001', 'Otavalo sn y principal', '098254785'),
+('Marianela Montalvo', 'F', 28, 'ID-002', 'Amazonas y NNUU', '097548965'),
+('Juan Osorio', 'M', 35, 'ID-003', '13 junio y Equinoccial', '098874587');
+
+INSERT INTO cliente (cliente_id, contrasena, estado) VALUES
+(1, '1234', 1),
+(2, '5678', 1),
+(3, '1245', 1);
+
+INSERT INTO cuenta (numero_cuenta, tipo_cuenta, saldo_inicial, estado, cliente_id) VALUES
+('478758', 'Ahorro', 2000, 1, 1),
+('225487', 'Corriente', 100, 1, 2),
+('495878', 'Ahorros', 0, 1, 3),
+('496825', 'Ahorros', 540, 1, 2),
+('585545', 'Corriente', 1000, 1, 1);
+
+INSERT INTO movimiento (fecha, tipo_movimiento, valor, saldo, cuenta_id) VALUES
+('2022-02-10 08:00:00', 'Deposito', 600, 700, 2),
+('2022-02-08 09:00:00', 'Retiro', -540, 0, 4),
+('2022-02-09 10:00:00', 'Retiro', -575, 1425, 1);
