@@ -1,0 +1,68 @@
+services:
+  db:
+    image: mysql:8.3
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: banco
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  ms-clientes:
+    build: ./backend/ms-clientes-personas
+    environment:
+      SERVER_PORT: 8081
+      MICROSERVICIOS_DB_DATASOURCE_URL: jdbc:mysql://db:3306/banco?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      MICROSERVICIOS_DB_USERNAME: root
+      MICROSERVICIOS_DB_PASSWORD: root
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    ports:
+      - "8081:8081"
+
+  ms-cuentas:
+    build: ./backend/ms-cuentas-movimientos
+    environment:
+      SERVER_PORT: 8082
+      MICROSERVICIOS_DB_DATASOURCE_URL: jdbc:mysql://db:3306/banco?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      MICROSERVICIOS_DB_USERNAME: root
+      MICROSERVICIOS_DB_PASSWORD: root
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    ports:
+      - "8082:8082"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    restart: unless-stopped
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: OtbaX0dYTlFTRURBTVBMQQ==
+    ports:
+      - "9092:9092"
